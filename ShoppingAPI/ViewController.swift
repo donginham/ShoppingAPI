@@ -32,11 +32,12 @@ class ViewController: UIViewController {
         callRequest()
     }
     func callRequest() {
-        let url = "https://openapi.naver.com/v1/search/shop.xml?query=\(searchBar.text ?? "캠핑카")&display=30"
+        let checkText = (searchBar.text?.isEmpty == false) ? searchBar.text! : "캠핑카"
+        let url = "https://openapi.naver.com/v1/search/shop.json?query=\(checkText)&display=30"
         print(url)
         let headers: HTTPHeaders = [
                     "X-Naver-Client-Id": "nTH6ASivTQMebncWWa1t",
-                    "X-Naver-Client-Secret": "X9yuamZgud"
+                    "X-Naver-Client-Secret": "qzCjMA0k9W"
                 ]
         AF.request(url,method: .get,headers: headers).responseDecodable(of:SearchData.self) { reponse in
             switch reponse.result {

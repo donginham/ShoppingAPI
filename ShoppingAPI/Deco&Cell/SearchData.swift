@@ -9,9 +9,9 @@ import Foundation
 import Alamofire
 struct SearchData: Decodable {
     let total: Int
-    let result : [items]
+    let items : [shopData]
 }
-struct items: Decodable {
+struct shopData: Decodable {
     let title: String
     let image: String
     let lprice: String

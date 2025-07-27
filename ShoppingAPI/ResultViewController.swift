@@ -10,7 +10,7 @@ import SnapKit
 import Alamofire
 
 class ResultViewController: UIViewController {
-    var shoppingResult : [items] = []
+    var shoppingResult : [shopData] = []
     var searchResult: String
 
         init(searchResult: String) {

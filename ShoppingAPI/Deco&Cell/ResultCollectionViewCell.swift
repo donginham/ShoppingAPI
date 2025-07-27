@@ -25,12 +25,12 @@ class ResultCollectionViewCell: UICollectionViewCell {
         let itemPrice = UILabel()
         return itemPrice
     }()
-    func setupCell (item: items) {
-        setupLayout(result: item)
+    func setupCell (shopData:shopData) {
+        setupLayout(result: shopData)
     }
 }
 private extension ResultCollectionViewCell {
-    func setupLayout(result: items) {
+    func setupLayout(result: shopData) {
         itemTitle.text = result.title
         mallLabel.text = result.mallName
         itemImage.kf.setImage(with: URL(string: result.image))
