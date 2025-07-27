@@ -1,0 +1,3 @@
+0000000000000000000000000000000000000000 bf57702a04eb551f8312f964eebd723f937856a3 HDI <hdihdi1869@gmail.com> 1753599403 +0900	commit (initial): Initial Commit
+bf57702a04eb551f8312f964eebd723f937856a3 a2f52f6ca3a5c22148b75fb899dceb57cfee648a HDI <hdihdi1869@gmail.com> 1753612847 +0900	commit: alamofire 연결 , getResponse 현재 에러남 수정전
+a2f52f6ca3a5c22148b75fb899dceb57cfee648a be9b5fe3d2043d00a93698820d664e46e86715de HDI <hdihdi1869@gmail.com> 1753613605 +0900	commit: 데이터 잘 나옴! 닐콜랜싱은 됐는데 빈 값 대비가 안되어있어서 그런듯
