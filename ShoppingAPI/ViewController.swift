@@ -22,44 +22,39 @@ class ViewController: UIViewController {
     let searchBar = {
         let searchBar = UISearchBar()
         searchBar.placeholder = "검색어를 입력해주세요"
-        searchBar.backgroundColor = .black
-        
+        searchBar.searchTextField.backgroundColor = .lightGray
+        searchBar.searchTextField.textColor = .white
+        searchBar.layer.borderColor = .none
         return searchBar
     }()
     let shoppingImage = UIImageView()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        view.addSubview(titleBar)
-        view.addSubview(searchBar)
-        view.addSubview(shoppingImage)
         let imgUrl = "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/587.png"
         shoppingImage.kf.setImage(with: URL(string: imgUrl))
-        configureDeco()
-        callRequest(query: "캠핑카")
-        searchBar.delegate = self
+        
+        
+        addObject()
+        configureObject()
+        connectData()
+        
+        callRequest(query: "",display: 0)
+        
     }
-    func callRequest(query: String) {
-        let url = "https://openapi.naver.com/v1/search/shop.json?query=\(query)&display=30"
-        print(url)
-        let headers: HTTPHeaders = [
-                    "X-Naver-Client-Id": "nTH6ASivTQMebncWWa1t",
-                    "X-Naver-Client-Secret": "qzCjMA0k9W"
-                ]
-        AF.request(url,method: .get,headers: headers).responseDecodable(of:SearchData.self) { reponse in
-            switch reponse.result {
-            case .success(let value):
-                print("성공",value)
+    func callRequest(query: String,display:Int) {
+        NetworkManager.shared.callRequest(query: query,display: display) { value in
             
-            case .failure(let error): 
-                print("실패!",error)
-            }
+            print("성공성공",value)
+        } failed: {
+            print("앗 실패")
         }
     }
-}
-extension ViewController: Deco,UISearchBarDelegate{
     
-    func configureDeco() {
+}
+extension ViewController: Configure,UISearchBarDelegate{
+    func configureObject() {
         titleBar.snp.makeConstraints { make in
             make.horizontalEdges.equalTo(view)
             make.top.equalTo(view.layoutMarginsGuide)
@@ -76,6 +71,15 @@ extension ViewController: Deco,UISearchBarDelegate{
         }
         
     }
+    func addObject() {
+        view.addSubview(titleBar)
+        view.addSubview(searchBar)
+        view.addSubview(shoppingImage)
+    }
+    func connectData() {
+        searchBar.delegate = self
+    }
+    
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.text = ""
     }
@@ -89,7 +93,7 @@ extension ViewController: Deco,UISearchBarDelegate{
         let VC = ResultViewController(searchResult: text)
         VC.modalPresentationStyle = .fullScreen
         present(VC,animated: true)
-        callRequest(query: text)
+        callRequest(query: text,display: 1)
         
     }
 }

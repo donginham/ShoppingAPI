@@ -9,7 +9,7 @@ import Foundation
 import Alamofire
 struct SearchData: Decodable {
     let total: Int
-    let start: Int
+    let display: Int
     let items : [shopData]
 }
 struct shopData: Decodable {

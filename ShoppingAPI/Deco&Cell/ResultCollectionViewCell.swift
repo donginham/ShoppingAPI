@@ -72,6 +72,7 @@ private extension ResultCollectionViewCell {
     }
     func configureObject() {
         itemImage.layer.cornerRadius = 10
+        itemImage.clipsToBounds = true
         mallLabel.font = .systemFont(ofSize: 12)
         mallLabel.textColor = .lightGray
         itemTitle.font = .systemFont(ofSize: 12)
@@ -81,20 +82,20 @@ private extension ResultCollectionViewCell {
         itemPrice.textColor = .white
     }
 }
-extension String {
-    // html 태그 제거 + html entity들 디코딩.
-    var htmlEscaped: String {
-        guard let encodedData = self.data(using: .utf8) else {
-            return self
-        }
-        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-            .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf8.rawValue
-        ]
-        if let attributed = try? NSAttributedString(data: encodedData, options: options, documentAttributes: nil) {
-            return attributed.string
-        } else {
-            return self
-        }
-    }
-}
+//extension String {
+//    // html 태그 제거 + html entity들 디코딩.
+//    var htmlEscaped: String {
+//        guard let encodedData = self.data(using: .utf8) else {
+//            return self
+//        }
+//        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+//            .documentType: NSAttributedString.DocumentType.html,
+//            .characterEncoding: String.Encoding.utf8.rawValue
+//        ]
+//        if let attributed = try? NSAttributedString(data: encodedData, options: options, documentAttributes: nil) {
+//            return attributed.string
+//        } else {
+//            return self
+//        }
+//    }
+//}

@@ -7,11 +7,14 @@
 
 import UIKit
 import SnapKit
-import Alamofire
 
 class ResultViewController: UIViewController {
+   
     var shoppingResult : [shopData] = []
-    var start = 1
+    var display = 30
+    var count = 1
+    let indexPath = IndexPath(row: NSNotFound, section: 0)
+    
     var searchResult: String
         init(searchResult: String) {
             self.searchResult = searchResult
@@ -20,11 +23,13 @@ class ResultViewController: UIViewController {
     required init?(coder: NSCoder) {
         fatalError("스또리보드를 위해 존재하는 코드")
     }
-    let totalCount = {
-       let totalCount = UILabel()
-        totalCount.textColor = .green
-        totalCount.font = .systemFont(ofSize: 14)
-        return totalCount
+    
+    //MARK: Object 선언
+    let totalLabel = {
+       let totalLabel = UILabel()
+        totalLabel.textColor = .green
+        totalLabel.font = .systemFont(ofSize: 14)
+        return totalLabel
     }()
     let shoppingCollection: UICollectionView = {
         let shoppingCollection = UICollectionViewFlowLayout()
@@ -37,6 +42,7 @@ class ResultViewController: UIViewController {
         collectionView.backgroundColor = .black
         return collectionView
     }()
+    
     let naviView: UIView = {
         let naviView = UIView()
         naviView.backgroundColor = .black
@@ -57,72 +63,45 @@ class ResultViewController: UIViewController {
         titleLabel.font = .boldSystemFont(ofSize: 16)
         return titleLabel
     }()
+    
+    func convertInt (count requestIntValue: Int) -> String {
+        let numberFormatter: NumberFormatter = NumberFormatter()
+        numberFormatter.numberStyle = .decimal
+        let numPrice: String = numberFormatter.string(for: requestIntValue)!
+        return numPrice
+    }
+    //MARK: viewDidLoad  호출 -
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
-        view.addSubview(naviView)
-        view.addSubview(totalCount)
-        view.addSubview(shoppingCollection)
-        naviView.addSubview(backButton)
-        naviView.addSubview(titleLabel)
         titleLabel.text = searchResult
-        objectsLayout()
-        backButton.addTarget(self, action: #selector(backButtonClicked), for: .touchUpInside)
-        shoppingCollection.dataSource = self
-        shoppingCollection.delegate = self
-        shoppingCollection.register(ResultCollectionViewCell.self,forCellWithReuseIdentifier:ResultCollectionViewCell.identifier)
-        callRequest(query: searchResult)
+        
+        addObject()
+        configureObject()
+        connectData()
+        callRequest(query: searchResult,display: display)
+        
     }
-    func callRequest(query:String) {
-        let url = "https://openapi.naver.com/v1/search/shop.json?query=\(query)&display=30"
-            let headers: HTTPHeaders = [
-                "X-Naver-Client-Id": "nTH6ASivTQMebncWWa1t",
-                "X-Naver-Client-Secret": "qzCjMA0k9W"
-            ]
-        AF.request(url,method: .get, headers: headers).validate(statusCode: 200..<300)
-            .responseDecodable(of:SearchData.self) { response in
-                switch response.result {
-                case .success(let value):
-                    print("서어어어엉고오오옹",value)
-                    self.shoppingResult = value.items
-                    self.shoppingResult.append(contentsOf: value.items)
-                    self.totalCount.text = "총 검색 결과 \(value.total)개"
-                    DispatchQueue.main.async { //백그라운드 스레드라 메인스레드로 넘길때 필요?한 코드, 얘도 비동기라는듯
-                        self.shoppingCollection.reloadData()
-                    }
-                case .failure(let error):
-                    print("아 제발 좀",error)
-                }
+    func callRequest(query: String,display: Int) {
+        NetworkManager.shared.callRequest(query: query,display: display) { value in
+            print("성공성공",value)
+            if display == 1 {
+                self.shoppingResult = value.items
+            } else {
+                self.shoppingResult.append(contentsOf: value.items)
+            }
+            self.count = value.total
+            self.display = value.display
+            self.totalLabel.text = "총 검색 결과 \(self.convertInt(count :value.total))개"
+                self.shoppingCollection.reloadData()
+            if self.display == 1 {
+                self.shoppingCollection.scrollToItem(at: self.indexPath as IndexPath, at: .top, animated: false)
+            }
+        } failed: {
+            print("앗 실패")
         }
     }
-    func objectsLayout() {
-        naviView.snp.makeConstraints { make in
-                make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-                make.leading.trailing.equalToSuperview()
-                make.height.equalTo(44)
-            }
-
-            backButton.snp.makeConstraints { make in
-                make.leading.equalToSuperview().inset(10)
-                make.centerY.equalToSuperview()
-                make.width.equalTo(40)
-            }
-
-            titleLabel.snp.makeConstraints { make in
-                make.center.equalToSuperview()
-            }
-
-            totalCount.snp.makeConstraints { make in
-                make.top.equalTo(naviView.snp.bottom).offset(8)
-                make.leading.trailing.equalToSuperview().inset(10)
-                make.height.equalTo(20)
-            }
-
-            shoppingCollection.snp.makeConstraints { make in
-                make.top.equalTo(totalCount.snp.bottom).offset(8)
-                make.leading.trailing.bottom.equalTo(view.safeAreaLayoutGuide)
-            }
-    }
+    
     @objc
     func backButtonClicked() {
         dismiss(animated: true)
@@ -132,11 +111,16 @@ extension ResultViewController: UICollectionViewDelegate, UICollectionViewDataSo
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return shoppingResult.count
     }
+    
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        if indexPath.row == (shoppingResult.count - 3) {
-            start += 1
-            collectionView.reloadData()
-            callRequest(query: searchResult)
+        if indexPath.row == (shoppingResult.count - 2) && count > display {
+            if count > display {
+                display += 30
+            } else {
+                display = display + (count - display)
+            }
+            shoppingCollection.reloadData()
+            callRequest(query: searchResult,display: display)
         }
     }
     
@@ -146,6 +130,45 @@ extension ResultViewController: UICollectionViewDelegate, UICollectionViewDataSo
         cell.setupCell(shopData: row)
         return cell
     }
-    
-    
+}
+
+extension ResultViewController: Configure {
+    func configureObject() {
+        naviView.snp.makeConstraints { make in
+                make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+                make.leading.trailing.equalToSuperview()
+                make.height.equalTo(44)
+            }
+            backButton.snp.makeConstraints { make in
+                make.leading.equalToSuperview().inset(10)
+                make.centerY.equalToSuperview()
+                make.width.equalTo(40)
+            }
+            titleLabel.snp.makeConstraints { make in
+                make.center.equalToSuperview()
+            }
+        totalLabel.snp.makeConstraints { make in
+                make.top.equalTo(naviView.snp.bottom).offset(8)
+                make.leading.trailing.equalToSuperview().inset(10)
+                make.height.equalTo(20)
+            }
+            shoppingCollection.snp.makeConstraints { make in
+                make.top.equalTo(totalLabel.snp.bottom).offset(8)
+                make.leading.trailing.bottom.equalTo(view.safeAreaLayoutGuide)
+            }
+    }
+    func addObject() {
+        view.addSubview(naviView)
+        view.addSubview(totalLabel)
+        view.addSubview(shoppingCollection)
+        naviView.addSubview(backButton)
+        naviView.addSubview(titleLabel)
+    }
+    func connectData() {
+        backButton.addTarget(self, action: #selector(backButtonClicked), for: .touchUpInside)
+        shoppingCollection.dataSource = self
+        shoppingCollection.delegate = self
+        shoppingCollection.register(ResultCollectionViewCell.self,forCellWithReuseIdentifier:ResultCollectionViewCell.identifier)
+        
+    }
 }
