@@ -6,8 +6,15 @@
 //
 
 import Foundation
+@objc
 protocol Configure {
+    
+    @objc
+    optional func settingView()
+    
     func addObject()
     func configureObject()
-    func  connectData()
+    
+    @objc
+    optional func  connectData()
 }

@@ -10,7 +10,7 @@ import Alamofire
 import SnapKit
 import Kingfisher
 class ViewController: UIViewController {
-    
+    let sorted = "sim"
     let titleBar = {
         let titleBar = UILabel()
         titleBar.text = "쇼핑API"
@@ -24,36 +24,48 @@ class ViewController: UIViewController {
         searchBar.placeholder = "검색어를 입력해주세요"
         searchBar.searchTextField.backgroundColor = .lightGray
         searchBar.searchTextField.textColor = .white
-        searchBar.layer.borderColor = .none
+        searchBar.searchTextField.layer.borderWidth = 0
+        searchBar.searchTextField.layer.borderColor = UIColor.clear.cgColor
+        searchBar.backgroundImage = UIImage()
+        searchBar.layer.borderWidth = 0
+        searchBar.layer.borderColor = UIColor.clear.cgColor
         return searchBar
     }()
     let shoppingImage = UIImageView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        settingView()
+        addObject()
+        configureObject()
+        connectData()
+        callRequest(query: "캠핑",display: 30,sort:"sim")
+        
+    }
+    func callRequest(query: String,display:Int,sort:String) {
+        NetworkManager.shared.callRequest(query: query,display: display,sort: "sim") { value in
+            print("성공성공",value)
+        } failed: { errorMessage in
+            self.showAlert(title: "고장고장", message: errorMessage)
+        }
+    }
+    func showAlert(title: String, message: String, okTitle: String = "확인") {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let okButton = UIAlertAction(title: okTitle, style: .default)
+        let cancelButton = UIAlertAction(title: "취소", style: .cancel)
+        alert.addAction(okButton)
+        alert.addAction(cancelButton)
+        self.present(alert, animated: true)
+    }
+}
+extension ViewController: Configure,UISearchBarDelegate{
+    func settingView(){
         view.backgroundColor = .black
         let imgUrl = "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/587.png"
         shoppingImage.kf.setImage(with: URL(string: imgUrl))
         
-        
-        addObject()
-        configureObject()
-        connectData()
-        
-        callRequest(query: "",display: 0)
-        
     }
-    func callRequest(query: String,display:Int) {
-        NetworkManager.shared.callRequest(query: query,display: display) { value in
-            
-            print("성공성공",value)
-        } failed: {
-            print("앗 실패")
-        }
-    }
-    
-}
-extension ViewController: Configure,UISearchBarDelegate{
     func configureObject() {
         titleBar.snp.makeConstraints { make in
             make.horizontalEdges.equalTo(view)
@@ -90,10 +102,9 @@ extension ViewController: Configure,UISearchBarDelegate{
             return
         }
         searchBar.text = ""
-        let VC = ResultViewController(searchResult: text)
+        callRequest(query: text,display: 1,sort:"sim")
+        let VC = ResultViewController(searchResult: text,sorted:sorted)
         VC.modalPresentationStyle = .fullScreen
         present(VC,animated: true)
-        callRequest(query: text,display: 1)
-        
     }
 }

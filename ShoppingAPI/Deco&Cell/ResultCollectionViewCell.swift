@@ -29,11 +29,33 @@ class ResultCollectionViewCell: UICollectionViewCell {
     }()
     func setupCell (shopData:shopData) {
         setupLayout(result: shopData)
+        addObject()
+        configureObject()
+    }
+}
+extension ResultCollectionViewCell: Configure {
+    
+    
+    func addObject() {
         let objects = [itemImage,mallLabel,itemTitle,itemPrice]
         
         objects.forEach { view in
             contentView.addSubview(view)
         }
+    }
+    
+    func setupLayout(result: shopData) {
+        let requestIntValue =  Int(result.lprice)
+        let numberFormatter: NumberFormatter = NumberFormatter()
+        numberFormatter.numberStyle = .decimal
+        let numPrice: String = numberFormatter.string(for: requestIntValue)!
+
+        itemTitle.text = result.title.htmlEscaped
+        mallLabel.text = result.mallName
+        itemPrice.text  = "\(numPrice)원"
+        itemImage.kf.setImage(with: URL(string: result.image))
+    }
+    func configureObject() {
         itemImage.snp.makeConstraints { make in
             make.size.equalTo(150)
             make.centerX.equalTo(contentView)
@@ -55,22 +77,6 @@ class ResultCollectionViewCell: UICollectionViewCell {
             make.height.equalTo(25)
             make.horizontalEdges.equalTo(itemTitle.snp.horizontalEdges)
         }
-        configureObject()
-    }
-}
-private extension ResultCollectionViewCell {
-    func setupLayout(result: shopData) {
-        let requestIntValue =  Int(result.lprice)
-        let numberFormatter: NumberFormatter = NumberFormatter()
-        numberFormatter.numberStyle = .decimal
-        let numPrice: String = numberFormatter.string(for: requestIntValue)!
-
-        itemTitle.text = result.title
-        mallLabel.text = result.mallName
-        itemPrice.text  = "\(numPrice)원"
-        itemImage.kf.setImage(with: URL(string: result.image))
-    }
-    func configureObject() {
         itemImage.layer.cornerRadius = 10
         itemImage.clipsToBounds = true
         mallLabel.font = .systemFont(ofSize: 12)
@@ -82,20 +88,10 @@ private extension ResultCollectionViewCell {
         itemPrice.textColor = .white
     }
 }
-//extension String {
-//    // html 태그 제거 + html entity들 디코딩.
-//    var htmlEscaped: String {
-//        guard let encodedData = self.data(using: .utf8) else {
-//            return self
-//        }
-//        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-//            .documentType: NSAttributedString.DocumentType.html,
-//            .characterEncoding: String.Encoding.utf8.rawValue
-//        ]
-//        if let attributed = try? NSAttributedString(data: encodedData, options: options, documentAttributes: nil) {
-//            return attributed.string
-//        } else {
-//            return self
-//        }
-//    }
-//}
+extension String {
+    var htmlEscaped: String {
+        let regex = try! NSRegularExpression(pattern: "<[^>]+>", options: [])
+        let range = NSRange(location: 0, length: self.count)
+        return regex.stringByReplacingMatches(in: self, options: [], range: range, withTemplate: "")
+    }
+}
