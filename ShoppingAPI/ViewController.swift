@@ -9,6 +9,7 @@ import UIKit
 import Alamofire
 import SnapKit
 import Kingfisher
+
 class ViewController: UIViewController {
     let sorted = "sim"
     let titleBar = {
@@ -32,7 +33,7 @@ class ViewController: UIViewController {
         return searchBar
     }()
     let shoppingImage = UIImageView()
-    
+    let viewModel = SearchInputViewModel()
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -40,15 +41,7 @@ class ViewController: UIViewController {
         addObject()
         configureObject()
         connectData()
-        callRequest(query: "캠핑",display: 30,sort:"sim")
         
-    }
-    func callRequest(query: String,display:Int,sort:String) {
-        NetworkManager.shared.callRequest(query: query,display: display,sort: "sim") { value in
-            print("성공성공",value)
-        } failed: { errorMessage in
-            self.showAlert(title: "고장고장", message: errorMessage)
-        }
     }
     func showAlert(title: String, message: String, okTitle: String = "확인") {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -97,14 +90,17 @@ extension ViewController: Configure,UISearchBarDelegate{
     }
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         print("엔터누름진짜임")
-        guard let text = searchBar.text, text.count > 0 else {
+        guard let text = searchBar.text, !text.isEmpty else {
             print("빈값 입력")
             return
         }
-        searchBar.text = ""
-        callRequest(query: text,display: 1,sort:"sim")
-        let VC = ResultViewController(searchResult: text,sorted:sorted)
+        searchBar.resignFirstResponder()
+        viewModel.inputSearchQuery.value = text
+        
+        let VC = ResultViewController(searchResult: text, sorted: viewModel.sorted)
         VC.modalPresentationStyle = .fullScreen
-        present(VC,animated: true)
+        present(VC, animated: true)
+        
+        searchBar.text = ""
     }
 }

@@ -118,12 +118,31 @@ class ResultViewController: UIViewController {
     
     
     //MARK: viewDidLoad  호출 -
+    let viewModel = ResultViewModel()
     override func viewDidLoad() {
         super.viewDidLoad()
         addObject()
         configureObject()
         connectData()
-        callRequest(query: searchResult,display: display,sort:sorted)
+        viewModel.searchQuery.value = searchResult
+        // 바인딩 설정
+        viewModel.searchResults.lazybind { value in
+            self.shoppingResult = value
+            self.recommandResult = value.map {
+                $0.image
+            }
+            self.shoppingCollection.reloadData()
+            self.recommandCollectionView.reloadData()
+        }
+        viewModel.totalCount.bind { count in
+            self.totalLabel.text = "총 검색 결과 \(self.convertInt(count: count))개"
+        }
+        viewModel.errorMessage.bind { error in
+            guard let error = error else {
+                return
+            }
+            self.showAlert(title: "에러났어요 에러", message: error ?? "너무 슬픈일이야")
+        }
     }
     
     func updateButtonStyle(selectedButton: UIButton) {
@@ -134,7 +153,6 @@ class ResultViewController: UIViewController {
         selectedButton.backgroundColor = .white
         selectedButton.layer.borderColor = UIColor.white.cgColor
         selectedButton.setTitleColor(.black, for: .normal)
-        
         self.selectedButton = selectedButton
     }
     
@@ -143,33 +161,6 @@ class ResultViewController: UIViewController {
         numberFormatter.numberStyle = .decimal
         let numPrice: String = numberFormatter.string(for: requestIntValue)!
         return numPrice
-    }
-    
-    func callRequest(query: String,display: Int,sort:String) {
-        guard !isLoading else { return }
-        isLoading = true
-        NetworkManager.shared.callRequest(query: query,display: display,sort: sort) { value in
-            print("성공성공",value)
-           
-            if display == self.pageSize {
-                self.shoppingResult = value.items
-                self.recommandResult = value.items.map { $0.image } //맵으로 이미지를 반환하는 클로저
-                self.shoppingCollection.setContentOffset(.zero, animated: false)
-                //버튼눌렀을때 스크롤 맨위로 가게하는 구문
-            } else {
-                self.shoppingResult.append(contentsOf: value.items)
-                self.recommandResult.append(contentsOf: value.items.map { $0.image })
-            }
-            self.count = value.total
-            self.isLoading  = false
-            self.totalLabel.text = "총 검색 결과 \(self.convertInt(count :value.total))개"
-            DispatchQueue.main.async {
-                self.shoppingCollection.reloadData()
-                self.recommandCollectionView.reloadData()
-            }
-        } failed: { errorMessage in
-            self.showAlert(title: "고장고장", message: errorMessage)
-        }
     }
     func showAlert(title: String, message: String, okTitle: String = "확인") {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -185,42 +176,26 @@ class ResultViewController: UIViewController {
     }
     @objc
     func accuracyButtonClicked() {
+        viewModel.changeSort("date")
         updateButtonStyle(selectedButton: accuracyButton)
-        sorted = "sim"
-        display = pageSize
-        shoppingResult.removeAll()
-        shoppingCollection.reloadData()
-        callRequest(query: searchResult, display: display, sort: sorted)
     }
     
     @objc
     func dateButtonClicked() {
+        viewModel.changeSort("sim")
         updateButtonStyle(selectedButton: dateButton)
-        sorted = "date"
-        display = pageSize
-        shoppingResult.removeAll()
-        shoppingCollection.reloadData()
-        callRequest(query: searchResult, display: display, sort: sorted)
     }
     
     @objc
     func highPriceButtonClicked() {
+        viewModel.changeSort("dsc")
         updateButtonStyle(selectedButton: highPriceButton)
-        sorted = "dsc"
-        display = pageSize
-        shoppingResult.removeAll()
-        shoppingCollection.reloadData()
-        callRequest(query: searchResult, display: display, sort: sorted)
     }
     
     @objc
     func lowPriceButtonClicked() {
+        viewModel.changeSort("asc")
         updateButtonStyle(selectedButton: lowPriceButton)
-        sorted = "asc"
-        display = pageSize
-        shoppingResult.removeAll()
-        shoppingCollection.reloadData()
-        callRequest(query: searchResult, display: display, sort: sorted)
     }
     
 }
@@ -229,22 +204,22 @@ extension ResultViewController: UICollectionViewDelegate, UICollectionViewDataSo
         return collectionView == recommandCollectionView ? recommandResult.count : shoppingResult.count
     }
     
-    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        if indexPath.row == shoppingResult.count - 2 && shoppingResult.count < count {
-            callRequest(query: searchResult, display: shoppingResult.count + pageSize, sort: sorted)
-        }
-    }
+//    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+//        if indexPath.row == shoppingResult.count - 2 && shoppingResult.count < count {
+//            callRequest(query: searchResult, display: shoppingResult.count + pageSize, sort: sorted)
+//        }
+//    }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if collectionView == recommandCollectionView {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: RecommandCollectionViewCell.identifier, for: indexPath) as! RecommandCollectionViewCell
-            let shopData = shoppingResult[indexPath.item]
-            cell.setupCell(shopData: shopData)
+            let data = viewModel.searchResults.value[indexPath.item]
+            cell.setupCell(shopData: data)
             return cell
         }
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ResultCollectionViewCell.identifier , for: indexPath) as! ResultCollectionViewCell
-        let row = shoppingResult[indexPath.item]
-        cell.setupCell(shopData: row)
+        let data = viewModel.searchResults.value[indexPath.item]
+        cell.setupCell(shopData: data)
         return cell
     }
 }
@@ -325,3 +300,4 @@ extension ResultViewController: Configure {
         recommandCollectionView.register(RecommandCollectionViewCell.self, forCellWithReuseIdentifier: RecommandCollectionViewCell.identifier)
     }
 }
+

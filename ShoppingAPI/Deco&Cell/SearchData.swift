@@ -17,4 +17,10 @@ struct shopData: Decodable {
     let image: String
     let lprice: String
     let mallName: String
+    enum Data {
+        case title
+        case image
+        case lprice
+        case mallName
+    }
 }
